@@ -1,0 +1,893 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Habit Tracker & Relapse Analyzer</title>
+    <style>
+        :root {
+            --bg-primary: #121214;
+            --bg-secondary: #1a1a1e;
+            --bg-tertiary: #26262b;
+            --accent-primary: #10b981;
+            --accent-primary-hover: #059669;
+            --accent-danger: #ef4444;
+            --accent-danger-hover: #dc2626;
+            --accent-warning: #f59e0b;
+            --accent-info: #3b82f6;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --border-color: #2e2e35;
+            --card-radius: 16px;
+            --button-radius: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            padding-bottom: 90px;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--bg-secondary);
+            padding: 20px 16px;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .header-title p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .tabs {
+            display: flex;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background-color: var(--accent-primary);
+            color: white;
+        }
+
+        .view-content {
+            display: none;
+        }
+
+        .view-content.active {
+            display: block;
+        }
+
+        .habit-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--card-radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .habit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .habit-title-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .habit-icon {
+            font-size: 1.5rem;
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background-color: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .habit-info h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .habit-meta {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 8px;
+            margin-top: 2px;
+        }
+
+        .badge {
+            background-color: var(--bg-tertiary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .badge.quit {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--accent-danger);
+        }
+
+        .badge.build {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--accent-primary);
+        }
+
+        .habit-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .streak-info {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-warning);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border-radius: var(--button-radius);
+            border: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: transform 0.1s active;
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-check {
+            background-color: var(--accent-primary);
+            color: white;
+        }
+
+        .btn-check.done {
+            background-color: var(--bg-tertiary);
+            color: var(--accent-primary);
+            border: 1px solid var(--accent-primary);
+        }
+
+        .btn-relapse {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--accent-danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .weekly-progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .weekly-progress-fill {
+            height: 100%;
+            background-color: var(--accent-primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background-color: var(--accent-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+            cursor: pointer;
+            border: none;
+            z-index: 90;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 200;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--card-radius);
+            padding: 20px;
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* Analytics View */
+        .analytics-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--card-radius);
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .analytics-card h4 {
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .heatmap-day {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            background-color: var(--bg-tertiary);
+            font-size: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+        }
+
+        .heatmap-day.completed {
+            background-color: var(--accent-primary);
+            color: white;
+        }
+
+        .heatmap-day.relapsed {
+            background-color: var(--accent-danger);
+            color: white;
+        }
+
+        .trigger-bar-container {
+            margin-bottom: 10px;
+        }
+
+        .trigger-bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+
+        .trigger-bar {
+            height: 8px;
+            background-color: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .trigger-bar-fill {
+            height: 100%;
+            background-color: var(--accent-danger);
+        }
+
+        .log-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+        }
+
+        .log-item:last-child {
+            border-bottom: none;
+        }
+
+        .log-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">
+            <h1>Habit & Trigger Tracker</h1>
+            <p>100% Offline & Private</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn-icon" onclick="exportData()" title="Export JSON">📤</button>
+            <button class="btn-icon" onclick="document.getElementById('importFile').click()" title="Import JSON">📥</button>
+            <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('today')">Today</button>
+            <button class="tab-btn" onclick="switchTab('analytics')">Stats & Triggers</button>
+        </div>
+
+        <!-- Today / Habits View -->
+        <div id="today-view" class="view-content active">
+            <div id="habits-list"></div>
+        </div>
+
+        <!-- Analytics & Relapse View -->
+        <div id="analytics-view" class="view-content">
+            <div class="analytics-card">
+                <h4>Top Relapse Triggers</h4>
+                <div id="trigger-stats">No relapse triggers logged yet.</div>
+            </div>
+
+            <div class="analytics-card">
+                <h4>Consistency Heatmap (Last 28 Days)</h4>
+                <div class="heatmap-grid" id="heatmap"></div>
+            </div>
+
+            <div class="analytics-card">
+                <h4>Relapse & Trigger Log</h4>
+                <div id="relapse-log">No logs yet.</div>
+            </div>
+        </div>
+    </div>
+
+    <button class="fab" onclick="openAddModal()">+</button>
+
+    <!-- Modal: Add Habit -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <div class="modal-title">Create New Habit</div>
+            <div class="form-group">
+                <label>Habit Name</label>
+                <input type="text" id="habitName" class="form-control" placeholder="e.g. Cycling, Quit Caffeine">
+            </div>
+            <div class="form-row">
+                <div class="form-group" style="flex:1">
+                    <label>Icon</label>
+                    <input type="text" id="habitIcon" class="form-control" value="🚴">
+                </div>
+                <div class="form-group" style="flex:2">
+                    <label>Type</label>
+                    <select id="habitType" class="form-control">
+                        <option value="build">Build / Maintain</option>
+                        <option value="quit">Quit / Reduce</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Target Frequency</label>
+                <select id="habitFreq" class="form-control" onchange="toggleQuotaInput()">
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly Quota (e.g., 2x per week)</option>
+                </select>
+            </div>
+            <div class="form-group" id="quotaGroup" style="display:none;">
+                <label>Target Completions Per Week</label>
+                <input type="number" id="habitQuota" class="form-control" value="2" min="1" max="7">
+            </div>
+            <div class="modal-actions">
+                <button class="btn" style="background-color: var(--bg-tertiary);" onclick="closeAddModal()">Cancel</button>
+                <button class="btn btn-check" onclick="saveHabit()">Save Habit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Log Relapse/Trigger -->
+    <div class="modal-overlay" id="relapseModal">
+        <div class="modal">
+            <div class="modal-title">Log Relapse & Trigger</div>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
+                Understanding triggers helps prevent future setbacks.
+            </p>
+            <input type="hidden" id="relapseHabitId">
+            <div class="form-group">
+                <label>Primary Trigger</label>
+                <select id="relapseTrigger" class="form-control">
+                    <option value="Stress">Stress</option>
+                    <option value="Fatigue / Low Energy">Fatigue / Low Energy</option>
+                    <option value="Social Pressure">Social Pressure</option>
+                    <option value="Boredom">Boredom</option>
+                    <option value="Cravings">Cravings</option>
+                    <option value="Poor Sleep">Poor Sleep</option>
+                    <option value="Emotional / Anxiety">Emotional / Anxiety</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Notes / Context (Optional)</label>
+                <textarea id="relapseNote" class="form-control" rows="3" placeholder="Where were you? What happened beforehand?"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" style="background-color: var(--bg-tertiary);" onclick="closeRelapseModal()">Cancel</button>
+                <button class="btn btn-relapse" onclick="confirmRelapse()">Log Trigger</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let habits = JSON.parse(localStorage.getItem('habits_data')) || [];
+        let logs = JSON.parse(localStorage.getItem('logs_data')) || [];
+
+        function saveState() {
+            localStorage.setItem('habits_data', JSON.stringify(habits));
+            localStorage.setItem('logs_data', JSON.stringify(logs));
+            render();
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
+            if (tab === 'today') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('today-view').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('analytics-view').classList.add('active');
+                renderAnalytics();
+            }
+        }
+
+        function toggleQuotaInput() {
+            const freq = document.getElementById('habitFreq').value;
+            document.getElementById('quotaGroup').style.display = freq === 'weekly' ? 'block' : 'none';
+        }
+
+        function openAddModal() {
+            document.getElementById('addModal').classList.add('active');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('active');
+        }
+
+        function saveHabit() {
+            const name = document.getElementById('habitName').value.trim();
+            const icon = document.getElementById('habitIcon').value.trim() || '🎯';
+            const type = document.getElementById('habitType').value;
+            const freq = document.getElementById('habitFreq').value;
+            const quota = parseInt(document.getElementById('habitQuota').value) || 1;
+
+            if (!name) return alert('Please enter a habit name');
+
+            habits.push({
+                id: Date.now().toString(),
+                name,
+                icon,
+                type,
+                freq,
+                quota: freq === 'weekly' ? quota : 1,
+                created: new Date().toISOString()
+            });
+
+            document.getElementById('habitName').value = '';
+            closeAddModal();
+            saveState();
+        }
+
+        function getTodayStr() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function getStartOfWeek() {
+            const d = new Date();
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday start
+            return new Date(d.setDate(diff)).toISOString().split('T')[0];
+        }
+
+        function toggleCheckIn(habitId) {
+            const today = getTodayStr();
+            const existingIdx = logs.findIndex(l => l.habitId === habitId && l.date === today && l.type === 'checkin');
+
+            if (existingIdx > -1) {
+                logs.splice(existingIdx, 1);
+            } else {
+                logs.push({
+                    habitId,
+                    date: today,
+                    type: 'checkin',
+                    timestamp: new Date().toISOString()
+                });
+            }
+            saveState();
+        }
+
+        function openRelapseModal(habitId) {
+            document.getElementById('relapseHabitId').value = habitId;
+            document.getElementById('relapseModal').classList.add('active');
+        }
+
+        function closeRelapseModal() {
+            document.getElementById('relapseModal').classList.remove('active');
+        }
+
+        function confirmRelapse() {
+            const habitId = document.getElementById('relapseHabitId').value;
+            const trigger = document.getElementById('relapseTrigger').value;
+            const note = document.getElementById('relapseNote').value.trim();
+            const today = getTodayStr();
+
+            logs.push({
+                habitId,
+                date: today,
+                type: 'relapse',
+                trigger,
+                note,
+                timestamp: new Date().toISOString()
+            });
+
+            document.getElementById('relapseNote').value = '';
+            closeRelapseModal();
+            saveState();
+        }
+
+        function calculateWeeklyCompletions(habitId) {
+            const startOfWeek = getStartOfWeek();
+            return logs.filter(l => l.habitId === habitId && l.type === 'checkin' && l.date >= startOfWeek).length;
+        }
+
+        function calculateStreak(habit) {
+            let streak = 0;
+            let checkDate = new Date();
+            
+            if (habit.freq === 'weekly') {
+                let currentWeekStart = getStartOfWeek();
+                let weekDate = new Date(currentWeekStart);
+                while (true) {
+                    const startStr = weekDate.toISOString().split('T')[0];
+                    const end = new Date(weekDate);
+                    end.setDate(end.getDate() + 6);
+                    const endStr = end.toISOString().split('T')[0];
+
+                    const count = logs.filter(l => l.habitId === habit.id && l.type === 'checkin' && l.date >= startStr && l.date <= endStr).length;
+                    
+                    if (count >= habit.quota) {
+                        streak++;
+                        weekDate.setDate(weekDate.getDate() - 7);
+                    } else if (startStr === getStartOfWeek()) {
+                        weekDate.setDate(weekDate.getDate() - 7);
+                    } else {
+                        break;
+                    }
+                }
+            } else {
+                while (true) {
+                    const dateStr = checkDate.toISOString().split('T')[0];
+                    const relapsed = logs.some(l => l.habitId === habit.id && l.date === dateStr && l.type === 'relapse');
+                    const checked = logs.some(l => l.habitId === habit.id && l.date === dateStr && l.type === 'checkin');
+
+                    if (relapsed) break;
+                    if (checked) {
+                        streak++;
+                    } else if (dateStr !== getTodayStr()) {
+                        break;
+                    }
+                    checkDate.setDate(checkDate.getDate() - 1);
+                }
+            }
+            return streak;
+        }
+
+        function render() {
+            const container = document.getElementById('habits-list');
+            container.innerHTML = '';
+
+            if (habits.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-muted)">No habits added yet. Tap + to create one!</div>`;
+                return;
+            }
+
+            const today = getTodayStr();
+
+            habits.forEach(habit => {
+                const checkedToday = logs.some(l => l.habitId === habit.id && l.date === today && l.type === 'checkin');
+                const streak = calculateStreak(habit);
+                const weeklyCount = habit.freq === 'weekly' ? calculateWeeklyCompletions(habit.id) : 0;
+                const progressPct = habit.freq === 'weekly' ? Math.min(100, (weeklyCount / habit.quota) * 100) : 0;
+
+                const card = document.createElement('div');
+                card.className = 'habit-card';
+                card.innerHTML = `
+                    <div class="habit-header">
+                        <div class="habit-title-area">
+                            <div class="habit-icon">${habit.icon}</div>
+                            <div class="habit-info">
+                                <h3>${habit.name}</h3>
+                                <div class="habit-meta">
+                                    <span class="badge ${habit.type}">${habit.type === 'quit' ? 'Quit / Avoid' : 'Build'}</span>
+                                    <span>${habit.freq === 'weekly' ? `${habit.quota}x / week` : 'Daily'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn-icon" style="width:28px;height:28px;font-size:0.8rem;" onclick="deleteHabit('${habit.id}')">✕</button>
+                    </div>
+
+                    ${habit.freq === 'weekly' ? `
+                        <div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-secondary)">
+                                <span>Weekly Quota</span>
+                                <span><strong>${weeklyCount}</strong> / ${habit.quota} done</span>
+                            </div>
+                            <div class="weekly-progress-bar">
+                                <div class="weekly-progress-fill" style="width:${progressPct}%"></div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div class="habit-controls">
+                        <div class="streak-info">
+                            🔥 ${streak} ${habit.freq === 'weekly' ? 'weeks' : 'days'}
+                        </div>
+                        <div class="action-btns">
+                            <button class="btn btn-relapse" onclick="openRelapseModal('${habit.id}')">
+                                ⚠️ Log Trigger
+                            </button>
+                            <button class="btn btn-check ${checkedToday ? 'done' : ''}" onclick="toggleCheckIn('${habit.id}')">
+                                ${checkedToday ? '✓ Done Today' : '+ Log Check-in'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function deleteHabit(id) {
+            if (confirm('Delete this habit and all associated logs?')) {
+                habits = habits.filter(h => h.id !== id);
+                logs = logs.filter(l => l.habitId !== id);
+                saveState();
+            }
+        }
+
+        function renderAnalytics() {
+            const triggerCounts = {};
+            const relapses = logs.filter(l => l.type === 'relapse');
+            
+            relapses.forEach(r => {
+                const t = r.trigger || 'Other';
+                triggerCounts[t] = (triggerCounts[t] || 0) + 1;
+            });
+
+            const triggerStatsContainer = document.getElementById('trigger-stats');
+            if (relapses.length === 0) {
+                triggerStatsContainer.innerHTML = '<span style="color:var(--text-muted); font-size:0.85rem">No triggers logged yet. Great job!</span>';
+            } else {
+                triggerStatsContainer.innerHTML = '';
+                Object.entries(triggerCounts)
+                    .sort((a,b) => b[1] - a[1])
+                    .forEach(([trigger, count]) => {
+                        const pct = Math.round((count / relapses.length) * 100);
+                        triggerStatsContainer.innerHTML += `
+                            <div class="trigger-bar-container">
+                                <div class="trigger-bar-label">
+                                    <span>${trigger}</span>
+                                    <span>${count} times (${pct}%)</span>
+                                </div>
+                                <div class="trigger-bar">
+                                    <div class="trigger-bar-fill" style="width:${pct}%"></div>
+                                </div>
+                            </div>
+                        `;
+                    });
+            }
+
+            const heatmapContainer = document.getElementById('heatmap');
+            heatmapContainer.innerHTML = '';
+            for (let i = 27; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                
+                const hasCheckin = logs.some(l => l.date === dateStr && l.type === 'checkin');
+                const hasRelapse = logs.some(l => l.date === dateStr && l.type === 'relapse');
+
+                let statusClass = '';
+                if (hasRelapse) statusClass = 'relapsed';
+                else if (hasCheckin) statusClass = 'completed';
+
+                heatmapContainer.innerHTML += `
+                    <div class="heatmap-day ${statusClass}" title="${dateStr}">
+                        ${d.getDate()}
+                    </div>
+                `;
+            }
+
+            const logContainer = document.getElementById('relapse-log');
+            if (logs.length === 0) {
+                logContainer.innerHTML = '<span style="color:var(--text-muted); font-size:0.85rem">No activity recorded.</span>';
+            } else {
+                logContainer.innerHTML = '';
+                [...logs].reverse().slice(0, 15).forEach(log => {
+                    const habit = habits.find(h => h.id === log.habitId);
+                    const habitName = habit ? habit.name : 'Deleted Habit';
+                    
+                    logContainer.innerHTML += `
+                        <div class="log-item">
+                            <div style="display:flex; justify-space-between;">
+                                <strong>${log.type === 'relapse' ? '⚠️ Relapse Trigger' : '✓ Check-in'} - ${habitName}</strong>
+                                <span class="log-date">${log.date}</span>
+                            </div>
+                            ${log.trigger ? `<div style="color:var(--accent-danger); font-size:0.8rem; margin-top:2px;">Trigger: ${log.trigger}</div>` : ''}
+                            ${log.note ? `<div style="color:var(--text-secondary); font-size:0.8rem; margin-top:2px;">"${log.note}"</div>` : ''}
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ habits, logs }, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `habits_backup_${getTodayStr()}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        }
+
+        function importData(event) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed.habits && parsed.logs) {
+                        habits = parsed.habits;
+                        logs = parsed.logs;
+                        saveState();
+                        alert('Data imported successfully!');
+                    }
+                } catch(err) {
+                    alert('Invalid JSON file.');
+                }
+            };
+            reader.readAsText(event.target.files[0]);
+        }
+
+        render();
+    </script>
+</body>
+</html>
